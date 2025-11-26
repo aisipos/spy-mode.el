@@ -20,6 +20,9 @@
     (t :inverse-video t))
   "Face for runtime (red) code in SPy.")
 
+(defvar-local spy-buffer-colorized-p nil
+  "Non-nil if the current buffer has spy colorization applied.")
+
 (defun spy-apply-highlights-from-json (json-string)
   "Parse JSON-STRING and apply spy-blue-face or spy-red-face overlays to current buffer.
 
@@ -56,7 +59,8 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
   (interactive)
   (unless buffer-file-name
     (error "Buffer is not visiting a file"))
-  (spy-colorize-clear-buffer)
+  (if spy-buffer-colorized-p
+      (spy-colorize-clear-buffer))
   ;; Kill any existing output buffer to start fresh
   (when (get-buffer "*spy-colorize-output*")
     (kill-buffer "*spy-colorize-output*"))
@@ -78,6 +82,7 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
                              (condition-case err
                                  (progn
                                    (spy-apply-highlights-from-json json-output)
+                                   (setq spy-buffer-colorized-p t)
                                    (kill-buffer (process-buffer proc)))
                                (error
                                 (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
@@ -86,6 +91,14 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
 (defun spy-colorize-clear-buffer ()
   "Remove all spy colorization overlays from the current buffer."
   (interactive)
-  (remove-overlays (point-min) (point-max) 'spy-highlight t))
+  (remove-overlays (point-min) (point-max) 'spy-highlight t)
+  (setq spy-buffer-colorized-p nil))
+
+(defun spy-toggle-colorize-buffer ()
+  "Toggle spy colorization for the current buffer."
+  (interactive)
+  (if spy-buffer-colorized-p
+      (spy-colorize-clear-buffer)
+    (spy-colorize-buffer)))
 
 (provide 'spy-mode)
