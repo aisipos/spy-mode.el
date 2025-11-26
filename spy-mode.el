@@ -103,4 +103,16 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
       (spy-colorize-clear-buffer)
     (spy-colorize-buffer)))
 
+(defconst spy-mode-name
+  (if (char-displayable-p ?🥸)
+      "🥸 SPy"
+    "SPy")
+  "Name of spy-mode for display in the mode line.")
+
+(define-derived-mode spy-mode python-ts-mode spy-mode-name
+  "Major mode for editing SPy files, derived from python-ts-mode.")
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.spy\\'" . spy-mode))
+
 (provide 'spy-mode)
