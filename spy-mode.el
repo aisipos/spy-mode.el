@@ -56,6 +56,34 @@ Shows the output buffer in another window as output is generated."
                                    (process-name proc)
                                    event))))))))
 
+(defmacro spy-defcommand (name flag buffer-name docstring)
+  "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME."
+  `(defun ,name ()
+     ,docstring
+     (interactive)
+     (spy-call-spy (list ,flag) ,buffer-name)))
+
+(spy-defcommand spy-show-pyparse "--pyparse" "*SPy Python AST*"
+                "Run 'spy --pyparse' and show the Python AST in another window.")
+
+(spy-defcommand spy-show-parse "--parse" "*SPy AST*"
+                "Run 'spy --parse' and show the SPy AST in another window.")
+
+(spy-defcommand spy-show-imports "--imports" "*SPy imports*"
+                "Run 'spy --imports' and show the recursive list of imports in another window.")
+
+(spy-defcommand spy-show-symtable "--symtable" "*SPy symtable*"
+                "Run 'spy --symtable' and show the symbol tables in another window.")
+
+(spy-defcommand spy-show-redshift "--redshift" "*SPy redshift*"
+                "Run 'spy --redshift' and show the redshifted AST in another window.")
+
+(spy-defcommand spy-show-cwrite "--cwrite" "*SPy C code*"
+                "Run 'spy --cwrite' and show the generated C code in another window.")
+
+(spy-defcommand spy-show-cdump "--cdump" "*SPy C dump*"
+                "Run 'spy --cdump' and show the generated C code in another window.")
+
 (defun spy-apply-highlights-from-json (json-string)
   "Parse JSON-STRING and apply spy-blue or spy-red overlays to current buffer.
 
