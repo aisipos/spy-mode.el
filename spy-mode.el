@@ -1,20 +1,20 @@
 ;;; spy-mode.el --- Major mode for SPy language -*- lexical-binding: t -*-
 
-(defface spy-blue-face
+(defface spy-blue
   '((((class color) (min-colors 256) (background light))
-     :background "#e3f2fd" :foreground "#0d47a1")
+     :background "blue" :foreground "white")
     (((class color) (min-colors 256) (background dark))
-     :background "#1a237e" :foreground "#bbdefb")
+     :background "blue" :foreground "white")
     (((class color) (min-colors 16))
      :background "blue" :foreground "white")
     (t :inverse-video t))
   "Face for compile-time (blue) code in SPy.")
 
-(defface spy-red-face
+(defface spy-red
   '((((class color) (min-colors 256) (background light))
-     :background "#ffebee" :foreground "#c62828")
+     :background "red" :foreground "white")
     (((class color) (min-colors 256) (background dark))
-     :background "#4a1a1a" :foreground "#ff6b6b")
+     :background "red" :foreground "white")
     (((class color) (min-colors 16))
      :background "red" :foreground "white")
     (t :inverse-video t))
@@ -24,7 +24,7 @@
   "Non-nil if the current buffer has spy colorization applied.")
 
 (defun spy-apply-highlights-from-json (json-string)
-  "Parse JSON-STRING and apply spy-blue-face or spy-red-face overlays to current buffer.
+  "Parse JSON-STRING and apply spy-blue or spy-red overlays to current buffer.
 
 JSON-STRING should be the output from 'spy --colorize --format=json',
 with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, ...]"
