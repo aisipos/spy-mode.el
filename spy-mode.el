@@ -180,6 +180,34 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
 (define-derived-mode spy-mode python-ts-mode spy-mode-name
   "Major mode for editing SPy files, derived from python-ts-mode.")
 
+;; Hydra menu for SPy commands (if hydra is available)
+(when (require 'hydra nil t)
+  (defhydra hydra-spy (:color blue :hint nil)
+    "
+^Compiler Pipeline^     ^Colorization^       ^Output^
+^^^^^^^^─────────────────────────────────────────────
+_P_: Python AST         _c_: Colorize        _w_: C Write
+_p_: SPy AST            _k_: Clear           _d_: C Dump
+_i_: Imports            _t_: Toggle
+_s_: Symtable
+_r_: Redshift
+_q_: quit
+"
+    ("P" spy-show-pyparse "Python AST")
+    ("p" spy-show-parse "SPy AST")
+    ("i" spy-show-imports "Imports")
+    ("s" spy-show-symtable "Symtable")
+    ("r" spy-show-redshift "Redshift")
+    ("w" spy-show-cwrite "C Write")
+    ("d" spy-show-cdump "C Dump")
+    ("c" spy-colorize-buffer "Colorize")
+    ("k" spy-colorize-clear-buffer "Clear")
+    ("t" spy-toggle-colorize-buffer "Toggle")
+    ("q" nil "quit"))
+
+  ;; Add keybinding to invoke the hydra
+  (define-key spy-mode-map (kbd "C-c s") 'hydra-spy/body))
+
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.spy\\'" . spy-mode))
 
