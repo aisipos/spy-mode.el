@@ -23,6 +23,39 @@
 (defvar-local spy-buffer-colorized-p nil
   "Non-nil if the current buffer has spy colorization applied.")
 
+(defun spy-call-spy (args &optional output-buffer-name)
+  "Call spy compiler with ARGS and display output in OUTPUT-BUFFER-NAME.
+ARGS should be a list of strings (e.g., '(\"--parse\" \"--dump\")).
+OUTPUT-BUFFER-NAME defaults to \"*SPy output*\".
+Shows the output buffer in another window as output is generated."
+  (interactive "sspy args: ")
+  (unless buffer-file-name
+    (error "Buffer is not visiting a file"))
+  (let* ((filename buffer-file-name)
+         (buf-name (or output-buffer-name "*SPy output*"))
+         (args-list (if (stringp args)
+                        (split-string args)
+                      args))
+         (full-command (append (list "spy") args-list (list filename))))
+    ;; Create or clear the output buffer
+    (with-current-buffer (get-buffer-create buf-name)
+      (let ((inhibit-read-only t))
+        (erase-buffer))
+      (compilation-mode)
+      (display-buffer (current-buffer)))
+    ;; Start the async process
+    (make-process
+     :name "spy"
+     :buffer buf-name
+     :command full-command
+     :sentinel (lambda (proc event)
+                 (with-current-buffer (process-buffer proc)
+                   (let ((inhibit-read-only t))
+                     (goto-char (point-max))
+                     (insert (format "\n\nProcess %s %s"
+                                   (process-name proc)
+                                   event))))))))
+
 (defun spy-apply-highlights-from-json (json-string)
   "Parse JSON-STRING and apply spy-blue or spy-red overlays to current buffer.
 
