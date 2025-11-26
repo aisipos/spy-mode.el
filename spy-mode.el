@@ -83,7 +83,8 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
                                  (progn
                                    (spy-apply-highlights-from-json json-output)
                                    (setq spy-buffer-colorized-p t)
-                                   (kill-buffer (process-buffer proc)))
+                                   (kill-buffer (process-buffer proc))
+                                   (message "Applied spy --colorize to current buffer"))
                                (error
                                 (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
                          (message "spy-colorize: No JSON found in output. Check *spy-colorize-output* buffer")))))))))
@@ -92,6 +93,7 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
   "Remove all spy colorization overlays from the current buffer."
   (interactive)
   (remove-overlays (point-min) (point-max) 'spy-highlight t)
+  (message "Cleared spy --colorize from current buffer")
   (setq spy-buffer-colorized-p nil))
 
 (defun spy-toggle-colorize-buffer ()
