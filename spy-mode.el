@@ -182,7 +182,7 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
 
 ;; Hydra menu for SPy commands (if hydra is available)
 (when (require 'hydra nil t)
-  (defhydra hydra-spy (:color blue :hint nil)
+  (defhydra hydra-spy (:color pink :hint nil)
     "
 ^Compiler Pipeline^     ^Colorization^       ^Output^
 ^^^^^^^^─────────────────────────────────────────────
