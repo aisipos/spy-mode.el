@@ -36,25 +36,59 @@ Shows the output buffer in another window as output is generated."
          (args-list (if (stringp args)
                         (split-string args)
                       args))
-         (full-command (append (list "spy") args-list (list filename))))
-    ;; Create or clear the output buffer
+         (full-command (append (list "spy") args-list (list filename)))
+         (output-window nil))
+    ;; Create or clear the output buffer and capture the window
     (with-current-buffer (get-buffer-create buf-name)
       (let ((inhibit-read-only t))
         (erase-buffer))
       (compilation-mode)
-      (display-buffer (current-buffer)))
+      (setq output-window (display-buffer (current-buffer))))
     ;; Start the async process
     (make-process
      :name "spy"
      :buffer buf-name
      :command full-command
+     :filter (lambda (proc string)
+               ;; Process ANSI colors in the string, then insert
+               (when (buffer-live-p (process-buffer proc))
+                 (with-current-buffer (process-buffer proc)
+                   (let ((inhibit-read-only t)
+                         (moving (= (point) (process-mark proc)))
+                         ;; Process ANSI codes BEFORE inserting
+                         (colored-string (ansi-color-apply string)))
+                     (save-excursion
+                       (goto-char (process-mark proc))
+                       (insert colored-string)
+                       (set-marker (process-mark proc) (point)))
+                     ;; If point was at end, keep it at end
+                     (when moving
+                       (goto-char (process-mark proc)))
+                     ;; Scroll the output window if it still exists
+                     (when (and output-window (window-live-p output-window))
+                       (with-selected-window output-window
+                         (goto-char (point-max))))))))
      :sentinel (lambda (proc event)
                  (with-current-buffer (process-buffer proc)
                    (let ((inhibit-read-only t))
                      (goto-char (point-max))
                      (insert (format "\n\nProcess %s %s"
-                                   (process-name proc)
-                                   event))))))))
+                                     (process-name proc)
+                                     event)))
+                   ;; Adjust window position when process finishes
+                   (when (and (memq (process-status proc) '(exit signal))
+                              output-window
+                              (window-live-p output-window))
+                     (with-selected-window output-window
+                       (let ((lines (count-lines (point-min) (point-max))))
+                         (if (< lines (window-height))
+                             ;; Output smaller than window: show from top
+                             (progn
+                               (goto-char (point-min))
+                               (recenter 0))
+                           ;; Output larger than window: show bottom at bottom
+                           (goto-char (point-max))
+                           (recenter -1))))))))))
 
 (defmacro spy-defcommand (name flag buffer-name docstring)
   "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME."
