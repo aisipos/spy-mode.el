@@ -23,6 +23,9 @@
 (defvar-local spy-buffer-colorized-p nil
   "Non-nil if the current buffer has spy colorization applied.")
 
+(defvar spy-command "spy"
+  "Command to run the SPy compiler.")
+
 (defun spy-call-spy (args &optional output-buffer-name)
   "Call spy compiler with ARGS and display output in OUTPUT-BUFFER-NAME.
 ARGS should be a list of strings (e.g., '(\"--parse\" \"--dump\")).
@@ -36,7 +39,7 @@ Shows the output buffer in another window as output is generated."
          (args-list (if (stringp args)
                         (split-string args)
                       args))
-         (full-command (append (list "spy") args-list (list filename)))
+         (full-command (append (list spy-command) args-list (list filename)))
          (output-window nil))
     ;; Create or clear the output buffer and capture the window
     (with-current-buffer (get-buffer-create buf-name)
@@ -164,7 +167,7 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
     (make-process
      :name "spy-colorize"
      :buffer "*spy-colorize-output*"
-     :command (list "spy" "--colorize" "--format=json" filename)
+     :command (list spy-command "--colorize" "--format=json" filename)
      :sentinel (lambda (proc event)
                  (when (string= event "finished\n")
                    (with-current-buffer buffer
