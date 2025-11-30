@@ -208,14 +208,17 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
   "Name of spy-mode for display in the mode line.")
 
 (defvar-keymap spy-mode-map
-  :doc "Keymap for spy-mode, inherits from python-ts-mode-map."
-  :parent python-ts-mode-map
+  :doc "Keymap for spy-mode."
+  :parent (if (fboundp 'python-ts-mode) python-ts-mode-map python-mode-map)
   "C-c C-c" #'spy-colorize-buffer
   "C-c C-k" #'spy-colorize-clear-buffer
   "C-c C-t" #'spy-toggle-colorize-buffer)
 
-(define-derived-mode spy-mode python-ts-mode spy-mode-name
-  "Major mode for editing SPy files, derived from python-ts-mode.")
+(if (fboundp 'python-ts-mode)
+    (define-derived-mode spy-mode python-ts-mode spy-mode-name
+      "Major mode for editing SPy files, derived from python-ts-mode.")
+  (define-derived-mode spy-mode python-mode spy-mode-name
+    "Major mode for editing SPy files, derived from python-mode."))
 
 ;; Hydra menu for SPy commands (if hydra is available)
 (when (require 'hydra nil t)
