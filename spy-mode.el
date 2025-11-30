@@ -127,6 +127,21 @@ Shows the output buffer in another window as output is generated."
 (spy-defcommand spy-show-cdump "--cdump" "*SPy C dump*"
                 "Run 'spy --cdump' and show the generated C code in another window.")
 
+(defun spy-compile-executable ()
+  "Compile the current buffer to a native executable."
+  (interactive)
+  (spy-call-spy '("-c" "-t" "native") "*SPy compile*"))
+
+(defun spy-execute-buffer ()
+  "Execute the current buffer in interpreted mode and show output."
+  (interactive)
+  (spy-call-spy '() "*SPy run*"))
+
+(defun spy-redshift-execute-buffer ()
+  "Redshift and execute the current buffer, showing output."
+  (interactive)
+  (spy-call-spy '("-r" "-x") "*SPy run*"))
+
 (defun spy-apply-highlights-from-json (json-string)
   "Parse JSON-STRING and apply spy-blue or spy-red overlays to current buffer.
 
@@ -230,13 +245,14 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
 (when (require 'hydra nil t)
   (defhydra hydra-spy (:color pink :hint nil)
     "
-^Compiler Pipeline^     ^Colorization^       ^Output^
-^^^^^^^^─────────────────────────────────────────────
-_P_: Python AST         _c_: Colorize        _w_: C Write
-_p_: SPy AST            _k_: Clear           _d_: C Dump
-_i_: Imports            _t_: Toggle
+^Compiler Pipeline^     ^Execute^            ^Colorization^       ^Output^
+^^^^^^^^─────────────────────────────────────────────────────────────────
+_P_: Python AST         _x_: Run             _c_: Colorize        _w_: C Write
+_p_: SPy AST            _X_: Redshift Run    _k_: Clear           _d_: C Dump
+_i_: Imports                               _t_: Toggle
 _s_: Symtable
 _r_: Redshift
+_C_: Compile
 _q_: quit
 "
     ("P" spy-show-pyparse "Python AST")
@@ -244,6 +260,9 @@ _q_: quit
     ("i" spy-show-imports "Imports")
     ("s" spy-show-symtable "Symtable")
     ("r" spy-show-redshift "Redshift")
+    ("C" spy-compile-executable "Compile")
+    ("x" spy-execute-buffer "Run")
+    ("X" spy-redshift-execute-buffer "Redshift Run")
     ("w" spy-show-cwrite "C Write")
     ("d" spy-show-cdump "C Dump")
     ("c" spy-colorize-buffer "Colorize")
