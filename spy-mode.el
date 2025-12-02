@@ -2,9 +2,9 @@
 
 (defface spy-blue
   '((((class color) (min-colors 256) (background light))
-     :background "blue" :foreground "white")
+     :background "#e3f2fd" :foreground "#0d47a1")
     (((class color) (min-colors 256) (background dark))
-     :background "blue" :foreground "white")
+     :background "#1a237e" :foreground "#bbdefb")
     (((class color) (min-colors 16))
      :background "blue" :foreground "white")
     (t :inverse-video t))
@@ -12,9 +12,9 @@
 
 (defface spy-red
   '((((class color) (min-colors 256) (background light))
-     :background "red" :foreground "white")
+     :background "#ffebee" :foreground "#c62828")
     (((class color) (min-colors 256) (background dark))
-     :background "red" :foreground "white")
+     :background "#4a1a1a" :foreground "#ff6b6b")
     (((class color) (min-colors 16))
      :background "red" :foreground "white")
     (t :inverse-video t))
@@ -208,7 +208,7 @@ With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for in
                                    (unless keep-output
                                      (kill-buffer (process-buffer proc)))
                                    (message "Applied spy --colorize to current buffer%s"
-                                           (if keep-output " (output buffer retained)" "")))
+                                            (if keep-output " (output buffer retained)" "")))
                                (error
                                 (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
                          (message "spy-colorize: No JSON found in output. Check *spy-colorize-output* buffer")))))))))
