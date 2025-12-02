@@ -89,21 +89,7 @@ Shows the output buffer in another window as output is generated."
                      (goto-char (point-max))
                      (insert (format "\n\nProcess %s %s"
                                      (process-name proc)
-                                     event)))
-                   ;; Adjust window position when process finishes
-                   (when (and (memq (process-status proc) '(exit signal))
-                              output-window
-                              (window-live-p output-window))
-                     (with-selected-window output-window
-                       (let ((lines (count-lines (point-min) (point-max))))
-                         (if (< lines (window-height))
-                             ;; Output smaller than window: show from top
-                             (progn
-                               (goto-char (point-min))
-                               (recenter 0))
-                           ;; Output larger than window: show bottom at bottom
-                           (goto-char (point-max))
-                           (recenter -1))))))))))
+                                     event))))))))
 
 (defmacro spy-defcommand (name flag buffer-name docstring)
   "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME.
