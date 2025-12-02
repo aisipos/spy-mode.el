@@ -26,6 +26,12 @@
 (defvar spy-command "spy"
   "Command to run the SPy compiler.")
 
+(defcustom spy-mode-reuse-output-buffer nil
+  "If non-nil, reuse a single buffer named *SPy Output* for all spy command output.
+When nil, each spy command uses its own dedicated output buffer."
+  :type 'boolean
+  :group 'spy)
+
 (defun spy--build-command (args filename)
   "Build a command list for running spy with ARGS and FILENAME.
 Handles splitting spy-command if it contains a runner like \"uv run spy\"."
@@ -100,11 +106,15 @@ Shows the output buffer in another window as output is generated."
                            (recenter -1))))))))))
 
 (defmacro spy-defcommand (name flag buffer-name docstring)
-  "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME."
+  "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME.
+If `spy-mode-reuse-output-buffer' is non-nil, output goes to *SPy Output* instead."
   `(defun ,name ()
      ,docstring
      (interactive)
-     (spy-call-spy (list ,flag) ,buffer-name)))
+     (spy-call-spy (list ,flag)
+                   (if spy-mode-reuse-output-buffer
+                       "*SPy Output*"
+                     ,buffer-name))))
 
 (spy-defcommand spy-show-pyparse "--pyparse" "*SPy Python AST*"
                 "Run 'spy --pyparse' and show the Python AST in another window.")
@@ -130,17 +140,20 @@ Shows the output buffer in another window as output is generated."
 (defun spy-compile-executable ()
   "Compile the current buffer to a native executable."
   (interactive)
-  (spy-call-spy '("-c" "-t" "native") "*SPy compile*"))
+  (spy-call-spy '("-c" "-t" "native")
+                (if spy-mode-reuse-output-buffer "*SPy Output*" "*SPy compile*")))
 
 (defun spy-execute-buffer ()
   "Execute the current buffer in interpreted mode and show output."
   (interactive)
-  (spy-call-spy '() "*SPy run*"))
+  (spy-call-spy '()
+                (if spy-mode-reuse-output-buffer "*SPy Output*" "*SPy run*")))
 
 (defun spy-redshift-execute-buffer ()
   "Redshift and execute the current buffer, showing output."
   (interactive)
-  (spy-call-spy '("-r" "-x") "*SPy run*"))
+  (spy-call-spy '("-r" "-x")
+                (if spy-mode-reuse-output-buffer "*SPy Output*" "*SPy run*")))
 
 (defun spy-apply-highlights-from-json (json-string)
   "Parse JSON-STRING and apply spy-blue or spy-red overlays to current buffer.
