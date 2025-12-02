@@ -52,7 +52,8 @@ Shows the output buffer in another window as output is generated."
                         (split-string args)
                       args))
          (full-command (spy--build-command args-list filename))
-         (output-window nil))
+         (output-window nil)
+         (start-time (current-time)))
     ;; Create or clear the output buffer and capture the window
     (with-current-buffer (get-buffer-create buf-name)
       (let ((inhibit-read-only t))
@@ -85,11 +86,14 @@ Shows the output buffer in another window as output is generated."
                          (goto-char (point-max))))))))
      :sentinel (lambda (proc event)
                  (with-current-buffer (process-buffer proc)
-                   (let ((inhibit-read-only t))
+                   (let* ((inhibit-read-only t)
+                          (elapsed (float-time (time-subtract (current-time) start-time)))
+                          (event-str (string-trim-right event)))
                      (goto-char (point-max))
-                     (insert (format "\n\nProcess %s %s"
+                     (insert (format "\nProcess %s %s (elapsed: %.2f sec)"
                                      (process-name proc)
-                                     event))))))))
+                                     event-str
+                                     elapsed))))))))
 
 (defmacro spy-defcommand (name flag buffer-name docstring)
   "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME.
