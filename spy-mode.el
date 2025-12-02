@@ -173,15 +173,16 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
             ;; Apply the actual face
             (overlay-put ov 'face face)))))))
 
-(defun spy-colorize-buffer ()
-  "Run 'spy --colorize --format=json' asynchronously on current buffer and apply highlighting."
-  (interactive)
+(defun spy-colorize-buffer (&optional keep-output)
+  "Run 'spy --colorize --format=json' asynchronously on current buffer and apply highlighting.
+With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for inspection."
+  (interactive "P")
   (unless buffer-file-name
     (error "Buffer is not visiting a file"))
   (if spy-buffer-colorized-p
       (spy-colorize-clear-buffer))
-  ;; Kill any existing output buffer to start fresh
-  (when (get-buffer "*spy-colorize-output*")
+  ;; Kill any existing output buffer to start fresh (unless keeping output)
+  (when (and (not keep-output) (get-buffer "*spy-colorize-output*"))
     (kill-buffer "*spy-colorize-output*"))
   (let* ((filename buffer-file-name)
          (buffer (current-buffer)))
@@ -202,8 +203,10 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
                                  (progn
                                    (spy-apply-highlights-from-json json-output)
                                    (setq spy-buffer-colorized-p t)
-                                   (kill-buffer (process-buffer proc))
-                                   (message "Applied spy --colorize to current buffer"))
+                                   (unless keep-output
+                                     (kill-buffer (process-buffer proc)))
+                                   (message "Applied spy --colorize to current buffer%s"
+                                           (if keep-output " (output buffer retained)" "")))
                                (error
                                 (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
                          (message "spy-colorize: No JSON found in output. Check *spy-colorize-output* buffer")))))))))
