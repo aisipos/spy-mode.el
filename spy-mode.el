@@ -160,7 +160,7 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
                (col (plist-get hl :col))
                (len (plist-get hl :length))
                (type (plist-get hl :type))
-               (face (intern (format "spy-%s-face" type))))
+               (face (intern (format "spy-%s" type))))
           (unless (facep face)
             (error "Unknown face: %s" face))
           ;; Go to the specified line and column
