@@ -50,6 +50,26 @@ Handles splitting spy-command if it contains a runner like \"uv run spy\"."
   (let ((spy-cmd-parts (split-string-and-unquote spy-command)))
     (append spy-cmd-parts args (list filename))))
 
+(defun spy--warn-on-process-failure (proc full-command)
+  "Check if PROC exited with non-zero code and display warning with FULL-COMMAND.
+Shows the exit code, command, and first 3 lines of output.
+Returns t if a warning was displayed, nil otherwise."
+  (let ((exit-status (process-exit-status proc)))
+    (when (and (eq (process-status proc) 'exit)
+               (not (zerop exit-status)))
+      (let* ((output (with-current-buffer (process-buffer proc)
+                       (buffer-substring-no-properties (point-min) (point-max))))
+             (output-lines (split-string output "\n" t))
+             (first-3-lines (string-join (seq-take output-lines 3) "\n"))
+             (cmd-str (mapconcat #'shell-quote-argument full-command " ")))
+        (display-warning 'spy
+                         (format "Command failed with exit code %d:\n  %s\n\nFirst 3 lines of output:\n%s"
+                                 exit-status
+                                 cmd-str
+                                 first-3-lines)
+                         :warning)
+        t))))
+
 (defun spy-call-spy (args &optional output-buffer-name)
   "Call spy compiler with ARGS and display output in OUTPUT-BUFFER-NAME.
 ARGS should be a list of strings (e.g., '(\"--parse\" \"--dump\")).
@@ -105,7 +125,8 @@ Shows the output buffer in another window as output is generated."
                      (insert (format "\nProcess %s %s (elapsed: %.2f sec)"
                                      (process-name proc)
                                      event-str
-                                     elapsed))))))))
+                                     elapsed))))
+                 (spy--warn-on-process-failure proc full-command)))))
 
 (defmacro spy-defcommand (name flag buffer-name docstring)
   "Define an interactive command to call spy with FLAG and show output in BUFFER-NAME.
@@ -202,31 +223,34 @@ With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for in
   (when (and (not keep-output) (get-buffer "*spy-colorize-output*"))
     (kill-buffer "*spy-colorize-output*"))
   (let* ((filename buffer-file-name)
-         (buffer (current-buffer)))
+         (buffer (current-buffer))
+         (full-command (spy--build-command '("--colorize" "--format=json") filename)))
     (make-process
      :name "spy-colorize"
      :buffer "*spy-colorize-output*"
-     :command (spy--build-command '("--colorize" "--format=json") filename)
+     :command full-command
      :sentinel (lambda (proc event)
-                 (when (string= event "finished\n")
-                   (with-current-buffer buffer
-                     (let ((output (with-current-buffer (process-buffer proc)
-                                     (buffer-string))))
-                       ;; Extract just the JSON array from the output
-                       ;; Use \\(?:.\\|\n\\) to match any character including newlines
-                       (if (string-match "\\(\\[\\(?:.\\|\n\\)*?\\]\\)" output)
-                           (let ((json-output (match-string 1 output)))
-                             (condition-case err
-                                 (progn
-                                   (spy-apply-highlights-from-json json-output)
-                                   (setq spy-buffer-colorized-p t)
-                                   (unless keep-output
-                                     (kill-buffer (process-buffer proc)))
-                                   (message "Applied spy --colorize to current buffer%s"
-                                            (if keep-output " (output buffer retained)" "")))
-                               (error
-                                (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
-                         (message "spy-colorize: No JSON found in output. Check *spy-colorize-output* buffer")))))))))
+                 (unless (spy--warn-on-process-failure proc full-command)
+                   ;; Success case - process JSON output
+                   (when (string= event "finished\n")
+                     (with-current-buffer buffer
+                       (let ((output (with-current-buffer (process-buffer proc)
+                                       (buffer-string))))
+                         ;; Extract just the JSON array from the output
+                         ;; Use \\(?:.\\|\n\\) to match any character including newlines
+                         (if (string-match "\\(\\[\\(?:.\\|\n\\)*?\\]\\)" output)
+                             (let ((json-output (match-string 1 output)))
+                               (condition-case err
+                                   (progn
+                                     (spy-apply-highlights-from-json json-output)
+                                     (setq spy-buffer-colorized-p t)
+                                     (unless keep-output
+                                       (kill-buffer (process-buffer proc)))
+                                     (message "Applied spy --colorize to current buffer%s"
+                                              (if keep-output " (output buffer retained)" "")))
+                                 (error
+                                  (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
+                           (message "spy-colorize: No JSON found in output. Check *spy-colorize-output* buffer"))))))))))
 
 (defun spy-colorize-clear-buffer ()
   "Remove all spy colorization overlays from the current buffer."
