@@ -72,7 +72,7 @@ Returns t if a warning was displayed, nil otherwise."
 
 (defun spy-call-spy (args &optional output-buffer-name)
   "Call spy compiler with ARGS and display output in OUTPUT-BUFFER-NAME.
-ARGS should be a list of strings (e.g., '(\"--parse\" \"--dump\")).
+ARGS should be a list of strings (e.g., '(\"parse\") or '(\"build\" \"--cdump\")).
 OUTPUT-BUFFER-NAME defaults to \"*SPy output*\".
 Shows the output buffer in another window as output is generated."
   (interactive "sspy args: ")
@@ -139,49 +139,59 @@ If `spy-mode-reuse-output-buffer' is non-nil, output goes to *SPy Output* instea
                        "*SPy Output*"
                      ,buffer-name))))
 
-(spy-defcommand spy-show-pyparse "--pyparse" "*SPy Python AST*"
-                "Run 'spy --pyparse' and show the Python AST in another window.")
+(spy-defcommand spy-show-pyparse "pyparse" "*SPy Python AST*"
+                "Run 'spy pyparse' and show the Python AST in another window.")
 
-(spy-defcommand spy-show-parse "--parse" "*SPy AST*"
-                "Run 'spy --parse' and show the SPy AST in another window.")
+(spy-defcommand spy-show-parse "parse" "*SPy AST*"
+                "Run 'spy parse' and show the SPy AST in another window.")
 
-(spy-defcommand spy-show-imports "--imports" "*SPy imports*"
-                "Run 'spy --imports' and show the recursive list of imports in another window.")
+(spy-defcommand spy-show-imports "imports" "*SPy imports*"
+                "Run 'spy imports' and show the recursive list of imports in another window.")
 
-(spy-defcommand spy-show-symtable "--symtable" "*SPy symtable*"
-                "Run 'spy --symtable' and show the symbol tables in another window.")
+(spy-defcommand spy-show-symtable "symtable" "*SPy symtable*"
+                "Run 'spy symtable' and show the symbol tables in another window.")
 
-(spy-defcommand spy-show-redshift "--redshift" "*SPy redshift*"
-                "Run 'spy --redshift' and show the redshifted AST in another window.")
+(spy-defcommand spy-show-redshift "redshift" "*SPy redshift*"
+                "Run 'spy redshift' and show the redshifted AST in another window.")
 
-(spy-defcommand spy-show-cwrite "--cwrite" "*SPy C code*"
-                "Run 'spy --cwrite' and show the generated C code in another window.")
+(defun spy-show-cwrite ()
+  "Run 'spy build --no-compile' and show the generated C code in another window."
+  (interactive)
+  (spy-call-spy '("build" "--no-compile")
+                (if spy-mode-reuse-output-buffer
+                    "*SPy Output*"
+                  "*SPy C code*")))
 
-(spy-defcommand spy-show-cdump "--cdump" "*SPy C dump*"
-                "Run 'spy --cdump' and show the generated C code in another window.")
+(defun spy-show-cdump ()
+  "Run 'spy build --cdump' and show the generated C code in another window."
+  (interactive)
+  (spy-call-spy '("build" "--cdump")
+                (if spy-mode-reuse-output-buffer
+                    "*SPy Output*"
+                  "*SPy C dump*")))
 
 (defun spy-compile-executable ()
   "Compile the current buffer to a native executable."
   (interactive)
-  (spy-call-spy '("-c" "-t" "native")
+  (spy-call-spy '("build" "-t" "native")
                 (if spy-mode-reuse-output-buffer "*SPy Output*" "*SPy compile*")))
 
 (defun spy-execute-buffer ()
   "Execute the current buffer in interpreted mode and show output."
   (interactive)
-  (spy-call-spy '()
+  (spy-call-spy '("execute")
                 (if spy-mode-reuse-output-buffer "*SPy Output*" "*SPy run*")))
 
 (defun spy-redshift-execute-buffer ()
   "Redshift and execute the current buffer, showing output."
   (interactive)
-  (spy-call-spy '("-r" "-x")
+  (spy-call-spy '("redshift" "-x")
                 (if spy-mode-reuse-output-buffer "*SPy Output*" "*SPy run*")))
 
 (defun spy-apply-highlights-from-json (json-string)
   "Parse JSON-STRING and apply spy-blue or spy-red overlays to current buffer.
 
-JSON-STRING should be the output from 'spy --colorize --format=json',
+JSON-STRING should be the output from 'spy colorize --format=json',
 with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, ...]"
   (let ((highlights (json-parse-string json-string
                                        :object-type 'plist
@@ -212,7 +222,7 @@ with format: [{\"line\": N, \"col\": C, \"length\": L, \"type\": \"blue|red\"}, 
             (overlay-put ov 'face face)))))))
 
 (defun spy-colorize-buffer (&optional keep-output)
-  "Run 'spy --colorize --format=json' asynchronously on current buffer and apply highlighting.
+  "Run 'spy colorize --format=json' asynchronously on current buffer and apply highlighting.
 With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for inspection."
   (interactive "P")
   (unless buffer-file-name
@@ -224,7 +234,7 @@ With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for in
     (kill-buffer "*spy-colorize-output*"))
   (let* ((filename buffer-file-name)
          (buffer (current-buffer))
-         (full-command (spy--build-command '("--colorize" "--format=json") filename)))
+         (full-command (spy--build-command '("colorize" "--format=json") filename)))
     (make-process
      :name "spy-colorize"
      :buffer "*spy-colorize-output*"
@@ -246,7 +256,7 @@ With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for in
                                      (setq spy-buffer-colorized-p t)
                                      (unless keep-output
                                        (kill-buffer (process-buffer proc)))
-                                     (message "Applied spy --colorize to current buffer%s"
+                                     (message "Applied spy colorize to current buffer%s"
                                               (if keep-output " (output buffer retained)" "")))
                                  (error
                                   (message "spy-colorize error: %s. Check *spy-colorize-output* buffer" err))))
@@ -256,7 +266,7 @@ With prefix argument KEEP-OUTPUT, retain the *spy-colorize-output* buffer for in
   "Remove all spy colorization overlays from the current buffer."
   (interactive)
   (remove-overlays (point-min) (point-max) 'spy-highlight t)
-  (message "Cleared spy --colorize from current buffer")
+  (message "Cleared spy colorize from current buffer")
   (setq spy-buffer-colorized-p nil))
 
 (defun spy-toggle-colorize-buffer ()

@@ -76,7 +76,7 @@ All commands are also available via `M-x`:
 
 ## Colorization
 
-Use `spy-colorize-buffer` (or `c` in the hydra) to apply colorization based on `spy --colorize --format=json` output.
+Use `spy-colorize-buffer` (or `c` in the hydra) to apply colorization based on `spy colorize --format=json` output.
 
 ## Requirements
 
